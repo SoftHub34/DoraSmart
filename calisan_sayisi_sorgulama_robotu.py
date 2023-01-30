@@ -1,11 +1,12 @@
-from task_base import TaskBase
+#Gerekli kütüphaneler importlandı. çalışsan sayısı sorgulama robotu ilk demo yapılan ve demo için hazırlanan robot.
+from task_base import TaskBase #her robot için gerekli olan lisansları kontrol eden çalışmasını kontrol eden task_base kodu importlandı
 from RPA.Browser.Selenium import Selenium
 from RPA.Excel.Files import Files
 import time
 import sys
 import json
 
-
+#class yapısı oluşturuldu.Gerekli parametreler oluşturuldu. İçerisine try-except bloğu ile çalışıp çalşmama durumu kontrol altına alındı
 class Task(TaskBase):
     def __init__(self, task_parameters):
         try:
@@ -52,13 +53,13 @@ class Task(TaskBase):
         self.logger.info(f"Finished. return_code: {return_code}")        
         return return_code
 
-
+#Robot kodunun çalışmasının başlangıcında sgk sitesine girebilmek için verilerin çekilmesi gerekmektedir verilerin alınacağı siteye yönlendiren verileri toplayan fonksiyon oluşturuldu.
     def Giris_bilgileri_alma(self):
         self.logger.info(f"Started.")
-        self.Sp_Id=""
-        self.Ozel_alan1=""
-        self.Ozel_alan2=""
-        self.Ozel_alan3=""
+        self.Sp_Id="" #Vereceğimiz excel raporunda istenen ve giriş bilgilerini aldığımız smartportal adresinde olan verileri de topluyoruz.
+        self.Ozel_alan1=""#Vereceğimiz excel raporunda istenen ve giriş bilgilerini aldığımız smartportal adresinde olan verileri de topluyoruz.
+        self.Ozel_alan2=""#Vereceğimiz excel raporunda istenen ve giriş bilgilerini aldığımız smartportal adresinde olan verileri de topluyoruz.
+        self.Ozel_alan3=""#Vereceğimiz excel raporunda istenen ve giriş bilgilerini aldığımız smartportal adresinde olan verileri de topluyoruz.
         self.selenium.open_available_browser(self.portal_url)
         self.selenium.input_text(locator="xpath://*[@autocomplete='email']",text=self.portal_user_mail)
         self.selenium.input_text(locator="xpath://*[@autocomplete='current-password']",text=self.portal_user_password)
@@ -118,7 +119,7 @@ class Task(TaskBase):
         self.selenium.close_browser()
         self.logger.info(f"Finished.")
         
-        
+    #alınan giriş bilgileri ile sgk sitesine giriş yapılır. bilgiler ekrana yazılarak işleme devam edilir.(Captcha kodu denenir fakat çözülemezse kullanıcıya manuel girmesi istenebilir.)    
     def Giris_bilgileri_yazma(self):    
         self.logger.info(f"Started.")
         self.selenium.open_available_browser(self.sgk_url)
@@ -145,14 +146,22 @@ class Task(TaskBase):
         self.selenium.wait_until_page_does_not_contain_element(locator="xpath://*[@id='guvenlik_kod']", timeout=180)
         self.logger.info(f"Finished.")
    
-    
+    #siteye girilmesinin ardından çıktı olarak bizden istenen verilerin hepsinin toplanması için sicil fonksiyonu oluştrulur.
+    #verilerin toplanmasındaki şartlar aşağıda belirtilmiştir.
+    #Açılan ekranda işçi sayısı tek satır ise aracı sıra noya göre hareket edilir ve işleme devam edilir.
+    #Çalışan sayısı çekilmek istenen işyerinin sicil numarası işaretli yerde yani işyeri kartı aracı sıra no '000' ise,
+    #İlk sırada yer alan başında herhangi bir rakam yazmayan satırın karşısındaki sayı işyeri çalışan sayısına yazılır.
+    #Toplamda bu sayı çıkartılır ve alt işveren sayısına yazılır. Diğer mükerrer bildrim ve tekilleştirilmiş sayı direkt alınır.
+    #Eğer 036 olarak işaretlenen gibi aracı sıranosu var ise bu satırın karşısındaki  sayı işyeri çalışan sayısına yazılır. 
+    #Başında sayı olmayan satır sayısı üst dosya çalışan sayısına yazılır. Toplam sayıdan üst dosya çalışan sayısı çıkartılır ve alt işveren çalışan sayısı bulunur
+    #diğer mükerrer bildrim ve tekilleştirilmiş sayı direkt alınır.
     def sicil(self):
         self.logger.info(f"Started.")
-        self.is_yeri_calisan_sayisi=0
-        self.ust_dosya_calisan_sayisi=0
-        self.alt_isveren_calisan_sayisi=0
-        self.mukerrer_bildirim=0
-        self.tekillestirilmis_toplam_sayi=0
+        self.is_yeri_calisan_sayisi=0#fonksiyonla sıfıra eşitlenir ve sonrasında toplanan veriler eklenir.
+        self.ust_dosya_calisan_sayisi=0#fonksiyonla sıfıra eşitlenir ve sonrasında toplanan veriler eklenir.
+        self.alt_isveren_calisan_sayisi=0#fonksiyonla sıfıra eşitlenir ve sonrasında toplanan veriler eklenir.
+        self.mukerrer_bildirim=0#fonksiyonla sıfıra eşitlenir ve sonrasında toplanan veriler eklenir.
+        self.tekillestirilmis_toplam_sayi=0#fonksiyonla sıfıra eşitlenir ve sonrasında toplanan veriler eklenir.
         self.selenium.switch_window('İşveren Sistemi',1000)
     
         self.selenium.maximize_browser_window()
@@ -183,7 +192,7 @@ class Task(TaskBase):
             else:
                 continue
 
-    
+    #excel dosyası ve sütunlar oluşturulur.
         self.excel.create_workbook("calışan_sayısı.xlsx")
         self.excel.set_cell_value(1, "A", "Şirket")
         self.excel.set_cell_value(1, "B", "is_yeri_calisan_sayisi" )
@@ -322,7 +331,7 @@ class Task(TaskBase):
                 step_value['tarih'] = self.tarih
                 self.add_trx_step(self.step_no, step_value)
                 self.step_no += 1
-                
+        #excel dosyası eklenen verilerle kaydedilir. ve kapatılır.        
         self.excel.save_workbook("calışan_sayısı.xlsx")
         self.excel.close_workbook()
 
